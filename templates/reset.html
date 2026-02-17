@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FleeTrace – Reset Password</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --bg-deep:#0a0e1a;
+  --bg-card:#111829;
+  --bg-input:#0d1220;
+  --accent:#00e5ff;
+  --accent-dim:rgba(0,229,255,.15);
+  --accent-glow:rgba(0,229,255,.35);
+  --text-primary:#e8edf5;
+  --text-muted:#6b7a99;
+  --border:rgba(0,229,255,.18);
+  --success:#00e676;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html,body{
+  height:100%;
+  overflow:hidden;
+  font-family:'Rajdhani',sans-serif;
+  background:var(--bg-deep);
+  color:var(--text-primary);
+}
+
+/* background */
+.bg-grid{
+  position:fixed;inset:0;
+  background:
+    linear-gradient(rgba(0,229,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:grid 40s linear infinite;
+}
+@keyframes grid{to{background-position:60px 60px}}
+
+.blob{
+  position:fixed;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:.18;
+}
+.blob.one{width:280px;height:280px;background:#00e5ff;top:-80px;left:-80px}
+.blob.two{width:220px;height:220px;background:#0066ff;bottom:-60px;right:-60px}
+
+/* layout */
+.page-wrap{
+  display:flex;
+  height:100%;
+  position:relative;
+  z-index:1;
+}
+
+.left-panel{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:0 5vw 0 20vw;
+  gap:4vh;
+}
+
+.logo-text{
+  font-family:'Orbitron',sans-serif;
+  font-size:1.8rem;
+  font-weight:700;
+  letter-spacing:2px;
+}
+.logo-text span{color:var(--accent)}
+
+.tagline{
+  max-width:380px;
+  color:var(--text-muted);
+  line-height:1.6;
+}
+
+/* right panel */
+.right-panel{
+  flex:0 0 44%;
+  max-width:500px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:6vh 6vw 4vh 0;
+}
+
+.card{
+  width:100%;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:3vh 34px 3vh;
+  backdrop-filter:blur(12px);
+  box-shadow:0 8px 40px rgba(0,0,0,.4);
+  position:relative;
+}
+
+.card::before{
+  content:'';
+  position:absolute;
+  top:0;left:10%;right:10%;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+}
+
+.card-header{
+  text-align:center;
+  margin-bottom:2vh;
+}
+
+.card-header h1{
+  font-family:'Orbitron',sans-serif;
+  font-size:1.2rem;
+  letter-spacing:1.5px;
+}
+
+.card-header p{
+  font-size:.8rem;
+  color:var(--text-muted);
+}
+
+/* form */
+.field{
+  margin-bottom:2vh;
+}
+
+.field label{
+  font-size:.75rem;
+  font-weight:600;
+  color:var(--text-muted);
+  margin-bottom:6px;
+  display:block;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+
+.input{
+  width:100%;
+  background:var(--bg-input);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:9px;
+  padding:11px 14px;
+  color:var(--text-primary);
+  font-size:.95rem;
+  outline:none;
+}
+
+.input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-dim);
+}
+
+/* button */
+.btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),#0066ff);
+  color:#0a0e1a;
+  font-family:'Orbitron',sans-serif;
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:1.4px;
+  cursor:pointer;
+  box-shadow:0 4px 18px var(--accent-glow);
+  transition:.25s;
+}
+
+.btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 24px var(--accent-glow);
+}
+
+/* success */
+.success{
+  display:none;
+  text-align:center;
+  margin-top:3vh;
+}
+
+.success.show{display:block}
+
+.success h3{
+  color:var(--success);
+  margin-bottom:6px;
+}
+.success p{color:var(--text-muted)}
+</style>
+</head>
+
+<body>
+
+<div class="bg-grid"></div>
+<div class="blob one"></div>
+<div class="blob two"></div>
+
+<div class="page-wrap">
+
+  <div class="left-panel">
+    <div class="logo-text">FLEE<span>TRACE</span></div>
+    <p class="tagline">
+      Securely reset your password and regain access to your fleet dashboard.
+    </p>
+  </div>
+
+  <div class="right-panel">
+    <div class="card">
+      <div class="card-header">
+        <h1>RESET PASSWORD</h1>
+        <p>FleeTrace Security</p>
+      </div>
+
+      <form method="post">
+        <div class="field">
+          <label>New Password</label>
+          <input
+            type="password"
+            name="password"
+            class="input"
+            placeholder="Enter new password"
+            required
+            <input type="hidden" name="access_token" id="access_token">
+          />
+        </div>
+
+        <button class="btn" type="submit">
+          UPDATE PASSWORD
+        </button>
+      </form>
+
+      <div class="success">
+        <h3>Password Updated</h3>
+        <p>You can now log in with your new password.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+const hash = window.location.hash.substring(1);
+const params = new URLSearchParams(hash);
+const token = params.get("access_token");
+
+if (token) {
+  document.getElementById("access_token").value = token;
+} else {
+  alert("Invalid or expired reset link");
+}
+</script>
+
+</body>
+</html>

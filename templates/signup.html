@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FleeTrace – Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg-deep:      #0a0e1a;
+    --bg-card:      #111829;
+    --bg-input:     #0d1220;
+    --accent:       #00e5ff;
+    --accent-dim:   rgba(0,229,255,.15);
+    --accent-glow:  rgba(0,229,255,.35);
+    --text-primary: #e8edf5;
+    --text-muted:   #6b7a99;
+    --border:       rgba(0,229,255,.18);
+    --red:          #ff4d6a;
+    --success:      #00e676;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── lock viewport — zero scroll ── */
+  html, body {
+    height: 100%; overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+  }
+
+  /* ── animated grid bg ── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { to { background-position: 60px 60px; } }
+
+  /* ── blobs ── */
+  .blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(80px); opacity: .18; z-index: 0;
+    animation: blobFloat 8s ease-in-out infinite alternate;
+  }
+  .blob--1 { width:300px; height:300px; background:#00e5ff; top:-100px; left:-90px; }
+  .blob--2 { width:220px; height:220px; background:#0066ff; bottom:-60px; right:-50px; animation-delay:2s; }
+  .blob--3 { width:160px; height:160px; background:#00e5ff; bottom:25%; left:8%;  animation-delay:4s; }
+  @keyframes blobFloat { to { transform: translate(35px, 25px) scale(1.07); } }
+
+  /* ══════ two-column root ══════ */
+  .page-wrap {
+    position: relative; z-index: 1;
+    display: flex;
+    width: 100%; height: 100%;
+  }
+
+  /* ════ LEFT PANEL ════ */
+  .left-panel {
+    flex: 1;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 0 5vw 0 20vw;
+    gap: 5vh;
+  }
+
+  .logo-area { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 50px; height: 50px;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 20px var(--accent-glow);
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 28px; height: 28px; }
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+    font-weight: 700; letter-spacing: 2px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .tagline {
+    font-size: clamp(.92rem, 1.15vw, 1.05rem);
+    color: var(--text-muted);
+    line-height: 1.65; max-width: 380px;
+  }
+
+  .feature-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+  .feature-list li { display: flex; align-items: center; gap: 14px; }
+  .feat-icon {
+    flex-shrink: 0; width: 40px; height: 40px;
+    border: 1px solid var(--border); border-radius: 11px;
+    background: var(--accent-dim);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feat-icon svg { width: 18px; height: 18px; color: var(--accent); }
+  .feat-text h4 { font-size: .95rem; font-weight: 600; margin-bottom: 1px; }
+  .feat-text p  { font-size: .82rem; color: var(--text-muted); margin: 0; }
+
+  /* ════ RIGHT PANEL ════ */
+  .right-panel {
+    flex: 0 0 44%; max-width: 500px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 7.5vh 6vw 4.5vh 0;
+  }
+
+  .card-wrap {
+    width: 100%;
+    max-height: calc(100vh - 5vh);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 3vh 34px 2.4vh;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 40px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .card-wrap::before {
+    content: '';
+    position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  /* header */
+  .card-header { text-align: center; margin-bottom: 2vh; flex-shrink: 0; }
+  .card-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1rem, 1.6vw, 1.3rem);
+    font-weight: 700; letter-spacing: 1.5px;
+  }
+  .card-header p { color: var(--text-muted); font-size: .82rem; margin-top: 5px; }
+
+  /* ── form layout ── */
+  #signupForm { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+  .form-row { display: flex; gap: 12px; }
+  .form-row .field { flex: 1; }
+
+  .field { margin-bottom: 1.5vh; position: relative; flex-shrink: 0; }
+  .field label {
+    display: block; font-size: .74rem; font-weight: 600;
+    color: var(--text-muted); margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: .7px;
+  }
+  .input-wrapper { position: relative; }
+  .input-wrapper .inp-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; color: var(--text-muted);
+    pointer-events: none; transition: color .3s;
+  }
+  .input-wrapper input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 9px;
+    padding: 9px 12px 9px 36px;
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: .95rem; font-weight: 500;
+    outline: none;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .input-wrapper input::placeholder { color: var(--text-muted); opacity: .55; }
+  .input-wrapper input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+  .input-wrapper:focus-within .inp-icon { color: var(--accent); }
+
+  /* eye toggle */
+  .pass-toggle {
+    position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color .3s;
+  }
+  .pass-toggle:hover { color: var(--accent); }
+  .pass-toggle svg  { width: 16px; height: 16px; }
+
+  /* inline error */
+  .err-msg {
+    font-size: .71rem; color: var(--red);
+    margin-top: 2px; height: 11px; line-height: 11px;
+    opacity: 0; transition: opacity .25s;
+  }
+  .err-msg.show { opacity: 1; }
+
+  /* strength bar */
+  .strength-wrap { margin-top: 4px; display: flex; gap: 5px; }
+  .strength-bar {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,.08);
+    transition: background .35s;
+  }
+  .strength-bar.active-1 { background: var(--red); }
+  .strength-bar.active-2 { background: #ffaa00; }
+  .strength-bar.active-3 { background: var(--success); }
+
+  /* password + confirm side by side */
+  .pass-row { display: flex; gap: 12px; }
+  .pass-row .field { flex: 1; }
+
+  /* terms */
+  .terms-row {
+    display: flex; align-items: flex-start; gap: 9px;
+    margin-top: 1vh; margin-bottom: .8vh; flex-shrink: 0;
+  }
+  .terms-row input[type=checkbox] {
+    appearance: none; width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px;
+    border: 2px solid rgba(255,255,255,.15);
+    border-radius: 5px; background: var(--bg-input);
+    cursor: pointer; position: relative;
+    transition: background .2s, border-color .2s;
+  }
+  .terms-row input[type=checkbox]:checked {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .terms-row input[type=checkbox]:checked::after {
+    content: '✓'; position: absolute; top: -2px; left: 2px;
+    color: #0a0e1a; font-size: .82rem; font-weight: 700;
+  }
+  .terms-row p { font-size: .78rem; color: var(--text-muted); line-height: 1.4; }
+  .terms-row a { color: var(--accent); text-decoration: none; }
+  .terms-row a:hover { text-decoration: underline; }
+
+  /* bottom group — pushed down by margin-top:auto */
+  .form-bottom { margin-top: auto; flex-shrink: 0; }
+
+  .btn-signup {
+    width: 100%; padding: 11px;
+    border: none; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #0077ff);
+    color: #0a0e1a;
+    font-family: 'Orbitron', sans-serif;
+    font-size: .82rem; font-weight: 700; letter-spacing: 1.4px;
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    box-shadow: 0 4px 18px var(--accent-glow);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .btn-signup:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-glow); }
+  .btn-signup:active { transform: translateY(0); }
+  .btn-signup .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,.35);
+    transform: scale(0);
+    animation: rippleAnim .6s linear;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+  .login-link { text-align: center; margin-top: 1.2vh; font-size: .82rem; color: var(--text-muted); flex-shrink: 0; }
+  .login-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .login-link a:hover { text-decoration: underline; }
+
+  /* ── success overlay ── */
+  .success-overlay {
+    position: absolute; inset: 0;
+    background: var(--bg-card); border-radius: 22px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; padding: 40px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .4s; z-index: 2;
+  }
+  .success-overlay.show { opacity: 1; pointer-events: auto; }
+  .success-overlay .check-circle {
+    width: 68px; height: 68px; border-radius: 50%;
+    border: 3px solid var(--success);
+    display: flex; align-items: center; justify-content: center;
+    animation: checkPop .5s cubic-bezier(.17,.67,.88,1.54) both;
+  }
+  @keyframes checkPop { from { transform: scale(0); } to { transform: scale(1); } }
+  .success-overlay .check-circle svg { width: 34px; height: 34px; color: var(--success); }
+  .success-overlay h2 { font-family: 'Orbitron', sans-serif; font-size: 1.15rem; letter-spacing: 1px; }
+  .success-overlay p { color: var(--text-muted); font-size: .9rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="blob blob--1"></div>
+<div class="blob blob--2"></div>
+<div class="blob blob--3"></div>
+
+<div class="page-wrap">
+
+  <!-- ════════════ LEFT ════════════ -->
+  <div class="left-panel">
+    <div class="logo-area">
+            <div class="logo-text">FLEE<span>TRACE</span></div>
+    </div>
+
+    <p class="tagline">A unified platform to monitor, manage, and optimise your entire vehicle fleet in real time.</p>
+
+    <ul class="feature-list">
+      <li>
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        </div>
+        <div class="feat-text">
+          <h4>Live GPS Tracking</h4>
+          <p>Monitor every vehicle's location in real time on an interactive map.</p>
+        </div>
+      </li>
+      <li>
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+        <div class="feat-text">
+          <h4>Fleet Dashboard</h4>
+          <p>A centralised view of driver status, vehicle health, and trip history.</p>
+        </div>
+      </li>
+              
+      </li>
+    </ul>
+  </div>
+
+  <!-- ════════════ RIGHT ════════════ -->
+  <div class="right-panel">
+    <div class="card-wrap">
+      <div class="card-header">
+        <h1>CREATE ACCOUNT</h1>
+        <p>Sign-up · FleeTrace</p>
+      </div>
+
+      <form id="signupForm" method="post" action="/signup">
+
+  <div class="field">
+    <label>Full Name</label>
+    <div class="input-wrapper">
+      <svg class="inp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        placeholder="Rahul Sharma"
+        required
+      />
+    </div>
+    <div class="err-msg" id="nameErr">Please enter your full name</div>
+  </div>
+
+  <div class="field">
+    <label>Email Address</label>
+    <div class="input-wrapper">
+      <svg class="inp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="rahul@example.com"
+        required
+      />
+    </div>
+    <div class="err-msg" id="emailErr">Enter a valid email</div>
+  </div>
+
+  <div class="field">
+    <label>Password</label>
+    <div class="input-wrapper">
+      <svg class="inp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+
+      <input
+        type="password"
+        id="password"
+        name="password"
+        placeholder="Min 8 chars"
+        oninput="checkStrength()"
+        required
+      />
+
+      <button type="button" class="pass-toggle" onclick="togglePass('password', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="strength-wrap">
+      <div class="strength-bar" id="s1"></div>
+      <div class="strength-bar" id="s2"></div>
+      <div class="strength-bar" id="s3"></div>
+    </div>
+
+    <div class="err-msg" id="passErr">Min 8 chars required</div>
+  </div>
+
+  <div class="form-bottom">
+    <button type="submit" class="btn-signup">
+      SIGN UP
+    </button>
+  </div>
+
+</form>
+
+
+      <p class="login-link">Already have an account? <a href="/signin">Sign-in</a></p>
+
+      <!-- success overlay -->
+      <div class="success-overlay" id="successOverlay">
+        <div class="check-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg>
+        </div>
+        <h2>Account Created!</h2>
+        <p>Welcome to FleeTrace.<br/>You can now log in and start managing your fleet.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function togglePass(inputId, btn) {
+  const input = document.getElementById(inputId);
+
+  if (input.type === "password") {
+    input.type = "text";
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      </svg>
+    `;
+  } else {
+    input.type = "password";
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    `;
+  }
+}
+
+function checkStrength() {
+  const p = document.getElementById('password').value;
+  let score = 0;
+
+  if (p.length >= 8) score++;
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) score++;
+  if (/[0-9]/.test(p) && /[^A-Za-z0-9]/.test(p)) score++;
+
+  const bars = [
+    document.getElementById('s1'),
+    document.getElementById('s2'),
+    document.getElementById('s3')
+  ];
+
+  bars.forEach(bar => {
+    bar.classList.remove('active-1', 'active-2', 'active-3');
+  });
+
+  if (score >= 1) bars[0].classList.add('active-1');
+  if (score >= 2) bars[1].classList.add('active-2');
+  if (score >= 3) bars[2].classList.add('active-3');
+}
+
+function clearErr(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function showErr(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+document.getElementById('submitBtn').addEventListener('click', function(e) {
+  const r = document.createElement('span');
+  r.classList.add('ripple');
+  const rect = this.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  r.style.width = r.style.height = size + 'px';
+  r.style.left = (e.clientX - rect.left) + 'px';
+  r.style.top = (e.clientY - rect.top) + 'px';
+  r.style.marginLeft = -(size / 2) + 'px';
+  r.style.marginTop = -(size / 2) + 'px';
+  this.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+});
+
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  let valid = true;
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirmPassword')
+    ? document.getElementById('confirmPassword').value
+    : password;
+  const terms = document.getElementById('termsCheck')
+    ? document.getElementById('termsCheck').checked
+    : true;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showErr('emailErr');
+    valid = false;
+  }
+
+  if (password.length < 8) {
+    showErr('passErr');
+    valid = false;
+  }
+
+  if (confirm !== password && document.getElementById('confirmErr')) {
+    showErr('confirmErr');
+    valid = false;
+  }
+
+  if (!terms && document.getElementById('termsErr')) {
+    showErr('termsErr');
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ email, password })
+  });
+
+  if (res.ok) {
+    document.getElementById('successOverlay').classList.add('show');
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FleeTrace – Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<!-- Leaflet CSS for Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Leaflet JS for Map - Load in HEAD to ensure it's available -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  :root {
+    --bg-deep:      #0a0e1a;
+    --bg-card:      #111829;
+    --bg-input:     #0d1220;
+    --accent:       #00e5ff;
+    --accent-dim:   rgba(0,229,255,.15);
+    --accent-glow:  rgba(0,229,255,.35);
+    --text-primary: #e8edf5;
+    --text-muted:   #6b7a99;
+    --border:       rgba(0,229,255,.18);
+    --red:          #ff4d6a;
+    --success:      #00e676;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated Grid Background */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { to { background-position: 60px 60px; } }
+
+  /* Gradient Blobs */
+  .blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(80px); opacity: .15; z-index: 0;
+    animation: blobFloat 8s ease-in-out infinite alternate;
+  }
+  .blob--1 { width:350px; height:350px; background:#00e5ff; top:-100px; right:-100px; }
+  .blob--2 { width:250px; height:250px; background:#0066ff; bottom:-80px; left:-80px; animation-delay:2s; }
+  @keyframes blobFloat { to { transform: translate(40px, 30px) scale(1.1); } }
+
+  /* Header */
+  .header {
+    position: relative; z-index: 10;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+  }
+
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .admin-name {
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+
+  .btn-logout {
+    padding: 10px 24px;
+    background: var(--red);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .btn-logout:hover { opacity: 0.85; }
+
+  /* Main Container */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  /* Summary Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    transition: transform .2s, box-shadow .2s;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,229,255,.2);
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-icon svg {
+    width: 30px;
+    height: 30px;
+    color: var(--accent);
+  }
+
+  .stat-info h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .stat-info p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Map Section */
+  .map-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+
+  .map-header {
+    margin-bottom: 20px;
+  }
+
+  .map-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  #map {
+    width: 100%;
+    height: 500px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+  }
+
+  /* Driver Table */
+  .table-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+
+  .table-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    background: var(--bg-input);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 15px;
+    text-align: left;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    transition: background .2s;
+    cursor: pointer;
+  }
+
+  tbody tr:hover {
+    background: var(--accent-dim);
+  }
+
+  tbody tr.selected {
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+  }
+
+  td {
+    padding: 15px;
+    font-size: 0.95rem;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .status.online {
+    background: rgba(0,230,118,.15);
+    color: var(--success);
+  }
+
+  .status.offline {
+    background: rgba(255,77,106,.15);
+    color: var(--red);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .status.online .status-dot {
+    background: var(--success);
+  }
+
+  .status.offline .status-dot {
+    background: var(--red);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .header {
+      flex-direction: column;
+      gap: 15px;
+      align-items: flex-start;
+    }
+
+    #map {
+      height: 350px;
+    }
+
+    table {
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 10px;
+    }
+  }
+
+  /* Leaflet Popup Customization */
+  .leaflet-popup-content-wrapper {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px);
+  }
+
+  .leaflet-popup-content {
+    margin: 15px !important;
+    font-family: 'Rajdhani', sans-serif !important;
+  }
+
+  .popup-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .popup-info {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 5px 0;
+  }
+
+  .popup-info strong {
+    color: var(--text-primary);
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="blob blob--1"></div>
+<div class="blob blob--2"></div>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo-text">FLEE<span>TRACE</span></div>
+  <div class="header-right">
+    <span class="admin-name">Admin Panel</span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<!-- Main Container -->
+<div class="container">
+
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="totalDrivers">0</h3>
+        <p>Total Drivers</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12,6 12,12 16,14"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="onlineDrivers">0</h3>
+        <p>Online Drivers</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Map Section -->
+  <div class="map-section">
+    <div class="map-header">
+      <h2 class="map-title">Live Driver Locations</h2>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <!-- Driver List Table -->
+  <div class="table-section">
+    <h3 class="table-title">Driver List</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Driver Name</th>
+          <th>Vehicle Number</th>
+          <th>Phone</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="driverTableBody">
+        <!-- Rows will be added by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+let map;
+let markers = {};
+
+// -------------------------------
+// INIT MAP
+// -------------------------------
+function initMap() {
+  map = L.map('map').setView([20.5937, 78.9629], 5);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  fetchAndRenderDrivers();
+  setInterval(fetchAndRenderDrivers, 5000); // refresh every 5 sec
+}
+
+// -------------------------------
+// ONLINE STATUS LOGIC
+// -------------------------------
+function isDriverOnline(driver) {
+  return driver.is_online === true;
+}
+
+// -------------------------------
+// FETCH + RENDER EVERYTHING
+// -------------------------------
+async function fetchAndRenderDrivers() {
+  const res = await fetch('/admin/drivers');
+  if (!res.ok) return;
+
+  const drivers = await res.json();
+
+  renderTable(drivers);
+  renderMap(drivers);
+  updateStats(drivers);
+}
+
+// -------------------------------
+// MAP RENDER
+// -------------------------------
+function renderMap(drivers) {
+  let onlineCount = 0;
+
+  drivers.forEach(driver => {
+    if (!driver.last_latitude || !driver.last_longitude) return;
+
+    const online = isDriverOnline(driver);
+    if (online) onlineCount++;
+
+    const color = online ? '#00e676' : '#ff4d6a';
+
+    const icon = L.divIcon({
+      html: `<div style="
+        width:18px;
+        height:18px;
+        background:${color};
+        border-radius:50%;
+        border:3px solid white;
+        box-shadow:0 0 8px ${color};
+      "></div>`,
+      className: ''
+    });
+
+    const latLng = [driver.last_latitude, driver.last_longitude];
+
+    if (markers[driver.id]) {
+      markers[driver.id].setLatLng(latLng);
+      markers[driver.id].setIcon(icon);
+    } else {
+      const marker = L.marker(latLng, { icon }).addTo(map);
+      
+      marker.bindPopup(`
+        <b>${driver.first_name ?? ''} ${driver.last_name ?? ''}</b><br/>
+        📞 ${driver.phone_number ?? '-'}<br/>
+        🚗 ${driver.vehicle_number ?? '-'}<br/>
+        
+      `);
+
+      markers[driver.id] = marker;
+    }
+  });
+}
+
+// -------------------------------
+// TABLE RENDER
+// -------------------------------
+function renderTable(drivers) {
+  const tbody = document.getElementById('driverTableBody');
+  tbody.innerHTML = '';
+
+  drivers.forEach(driver => {
+    const online = isDriverOnline(driver);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${driver.first_name ?? ''} ${driver.last_name ?? ''}</td>
+      <td>${driver.vehicle_number ?? '-'}</td>
+      <td>${driver.phone_number ?? '-'}</td>
+      <td>
+        <span class="status ${online ? 'online' : 'offline'}">
+          <span class="status-dot"></span>
+          ${online ? 'ONLINE' : 'OFFLINE'}
+        </span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// -------------------------------
+// STATS
+// -------------------------------
+function updateStats(drivers) {
+  const onlineCount = drivers.filter(isDriverOnline).length;
+
+  document.getElementById('totalDrivers').textContent = drivers.length;
+  document.getElementById('onlineDrivers').textContent = onlineCount;
+}
+
+// -------------------------------
+// START
+// -------------------------------
+window.addEventListener('load', initMap);
+
+// logout 
+async function logout() {
+  if (!confirm("Are you sure you want to logout?")) return;
+
+  await fetch('/logout', { method: 'POST' });
+  window.location.href = '/signin';
+}
+</script>
+
+
+</body>
+</html>

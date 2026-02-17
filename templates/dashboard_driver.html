@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FleeTrace – Driver Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg-deep:      #0a0e1a;
+    --bg-card:      #111829;
+    --bg-input:     #0d1220;
+    --accent:       #00e5ff;
+    --accent-dim:   rgba(0,229,255,.15);
+    --text-primary: #e8edf5;
+    --text-muted:   #6b7a99;
+    --border:       rgba(0,229,255,.18);
+    --red:          #ff4d6a;
+    --success: #2ecc71;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { to { background-position: 60px 60px; } }
+
+  /* Navbar */
+  .navbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .user-name {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .btn-logout {
+    padding: 8px 20px;
+    background: var(--red);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+
+  .btn-logout:hover {
+    opacity: 0.8;
+  }
+
+  /* Main Content */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .welcome {
+    margin-bottom: 30px;
+  }
+
+  .welcome h1 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+  }
+
+  .welcome p {
+    color: var(--text-muted);
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--accent-dim);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-icon svg {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+  }
+
+  .stat-info h3 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+  }
+
+  .stat-info p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  /* Profile Section */
+  .profile-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 30px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .btn-edit {
+    padding: 8px 20px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: var(--bg-deep);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+
+  .btn-edit:hover {
+    opacity: 0.8;
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+  }
+
+  .profile-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .profile-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+
+  .profile-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 25px 0;
+  }
+
+  /* Edit Mode */
+  .field {
+    margin-bottom: 15px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color .3s;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    border-color: var(--accent);
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-save {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--accent), #0077ff);
+    border: none;
+    border-radius: 6px;
+    color: var(--bg-deep);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+    .navbar {
+      padding: 15px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="logo-text">FLEE<span>TRACE</span></div>
+  <div class="nav-right">
+    <span class="user-name" id="navUserName">Loading...</span>
+      <button id="statusBtn"
+          class="btn-edit"
+          style="background:#2ecc71;color:#000"
+          onclick="toggleStatus()">
+    ONLINE
+  </button>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container">
+  
+  <!-- Welcome Section -->
+  <div class="welcome">
+    <h1 id="welcomeMessage">Welcome back!</h1>
+    <p>Here's your dashboard overview</p>
+  </div>
+
+  <!-- Stats Cards
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3>0</h3>
+        <p>Total Trips</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12,6 12,12 16,14"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3>0 hrs</h3>
+        <p>Total Hours</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8h1a4 4 0 010 8h-1"/>
+          <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/>
+          <line x1="6" y1="1" x2="6" y2="4"/>
+          <line x1="10" y1="1" x2="10" y2="4"/>
+          <line x1="14" y1="1" x2="14" y2="4"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3>0 km</h3>
+        <p>Total Distance</p>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- Location Section -->
+  <div class="profile-section" style="margin-bottom: 40px;">
+    <div class="section-header">
+      <h2 class="section-title">My Location</h2>
+    </div>
+
+    <div id="locationStatus" style="margin-bottom: 20px;">
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Click below to get your current location</p>
+    </div>
+
+    <div id="locationDisplay" class="hidden" style="margin-bottom: 20px;">
+      <div class="profile-grid">
+        <div class="profile-item">
+          <span class="profile-label">Latitude</span>
+          <span class="profile-value" id="latitude">-</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-label">Longitude</span>
+          <span class="profile-value" id="longitude">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-edit" onclick="getLocation()" style="flex: 1;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; display: inline-block; margin-right: 6px; vertical-align: middle;">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        Get Location
+      </button>
+      <button class="btn-edit" onclick="copyLocation()" id="copyBtn" style="flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-primary);" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; display: inline-block; margin-right: 6px; vertical-align: middle;">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy Location
+      </button>
+      <button class="btn-edit" onclick="shareLocation()" id="shareBtn" style="flex: 1; background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent);" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; display: inline-block; margin-right: 6px; vertical-align: middle;">
+          <circle cx="18" cy="5" r="3"/>
+          <circle cx="6" cy="12" r="3"/>
+          <circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        Share Location
+      </button>
+    </div>
+  </div>
+
+  <!-- Profile Section -->
+  <div class="profile-section">
+    <div class="section-header">
+      <h2 class="section-title">My Profile</h2>
+      <button class="btn-edit" id="editBtn" onclick="enableEdit()">Edit Profile</button>
+    </div>
+
+    <!-- View Mode -->
+    <div id="viewMode">
+      <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Personal Details</h3>
+      <div class="profile-grid">
+        <div class="profile-item">
+          <span class="profile-label">First Name</span>
+          <span class="profile-value" id="viewFirstName">-</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-label">Last Name</span>
+          <span class="profile-value" id="viewLastName">-</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-label">Phone Number</span>
+          <span class="profile-value" id="viewPhone">-</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-label">License Number</span>
+          <span class="profile-value" id="viewLicense">-</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Vehicle Details</h3>
+      <div class="profile-grid">
+        <div class="profile-item">
+          <span class="profile-label">Vehicle Number</span>
+          <span class="profile-value" id="viewVehicleNumber">-</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-label">Vehicle Type</span>
+          <span class="profile-value" id="viewVehicleType">-</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-label">Vehicle Model</span>
+          <span class="profile-value" id="viewVehicleModel">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Mode -->
+    <div id="editMode" class="hidden">
+      <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Personal Details</h3>
+      <div class="profile-grid">
+        <div class="field">
+          <label>First Name</label>
+          <input type="text" id="editFirstName">
+        </div>
+        <div class="field">
+          <label>Last Name</label>
+          <input type="text" id="editLastName">
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="editPhone">
+        </div>
+        <div class="field">
+          <label>License Number</label>
+          <input type="text" id="editLicense">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Vehicle Details</h3>
+      <div class="profile-grid">
+        <div class="field">
+          <label>Vehicle Number</label>
+          <input type="text" id="editVehicleNumber">
+        </div>
+        <div class="field">
+          <label>Vehicle Type</label>
+          <select id="editVehicleType">
+            <option value="car">Car</option>
+            <option value="truck">Truck</option>
+            <option value="van">Van</option>
+            <option value="bike">Bike</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vehicle Model</label>
+          <input type="text" id="editVehicleModel">
+        </div>
+      </div>
+
+      <div class="edit-actions">
+        <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+        <button class="btn-cancel" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+<script>
+async function fetchDriverProfile() {
+  try {
+    const res = await fetch("/driver/me");
+    if (!res.ok) throw new Error("Failed to fetch profile");
+
+    const data = await res.json();
+
+    // Map backend → frontend
+    driverData = {
+      firstName: data.first_name,
+      lastName: data.last_name,
+      phone: data.phone_number,
+      license: data.license_number,
+      vehicleNumber: data.vehicle_number,
+      vehicleType: data.vehicle_type,
+      vehicleModel: data.vehicle_model
+    };
+
+    loadProfile();
+  } catch (err) {
+    console.error(err);
+    alert("Unable to load driver profile");
+  }
+}
+
+
+//map related
+let isOnline = true;
+let locationInterval = null;
+
+async function toggleStatus() {
+  const btn = document.getElementById("statusBtn");
+
+  if (isOnline) {
+    // Go OFFLINE
+    isOnline = false;
+    btn.textContent = "OFFLINE";
+    btn.style.background = "#ff4d6a";
+    stopLiveTracking();
+
+    // 🔥 Notify backend
+    await fetch("/driver/set-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_online: false })
+    });
+
+  } else {
+    // Go ONLINE
+    isOnline = true;
+    btn.textContent = "ONLINE";
+    btn.style.background = "#2ecc71";
+    startLiveTracking();
+
+    // 🔥 Notify backend
+    await fetch("/driver/set-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_online: true })
+    });
+  }
+}
+
+
+function startLiveTracking() {
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported");
+    return;
+  }
+
+  // Send immediately
+  sendLiveLocation();
+
+  // Then every 15 seconds
+  locationInterval = setInterval(() => {
+  fetch("/driver/heartbeat", { method: "POST" });
+}, 15000);
+
+  console.log("Live tracking started");
+}
+
+function stopLiveTracking() {
+  if (locationInterval) {
+    clearInterval(locationInterval);
+    locationInterval = null;
+  }
+  console.log("Live tracking stopped");
+}
+
+function sendLiveLocation() {
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+       // 🔥 store for copy/share
+      currentLocation.latitude = lat;
+      currentLocation.longitude = lng;
+
+      // Update UI
+      document.getElementById("latitude").textContent = lat.toFixed(6);
+      document.getElementById("longitude").textContent = lng.toFixed(6);
+      document.getElementById("locationDisplay").classList.remove("hidden");
+
+       // 🔥 enable buttons
+      document.getElementById('copyBtn').disabled = false;
+      document.getElementById('shareBtn').disabled = false;
+      
+      // Send to backend
+      await fetch("/driver/update-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          latitude: lat,
+          longitude: lng
+        })
+      });
+
+      console.log("Location sent:", lat, lng);
+    },
+    (err) => {
+      console.error("Location error", err);
+    }
+  );
+}
+
+
+// Store current location
+let currentLocation = {
+  latitude: null,
+  longitude: null
+};
+
+// Load data on page load
+window.addEventListener('load', function() {
+  fetchDriverProfile();
+});
+
+
+function loadProfile() {
+  // In real app, fetch from database
+  // For now, use sample data
+  
+  // Update navbar
+  document.getElementById('navUserName').textContent = driverData.firstName + ' ' + driverData.lastName;
+  document.getElementById('welcomeMessage').textContent = `Welcome back, ${driverData.firstName}!`;
+  
+  // Update view mode
+  document.getElementById('viewFirstName').textContent = driverData.firstName;
+  document.getElementById('viewLastName').textContent = driverData.lastName;
+  document.getElementById('viewPhone').textContent = driverData.phone;
+  document.getElementById('viewLicense').textContent = driverData.license;
+  document.getElementById('viewVehicleNumber').textContent = driverData.vehicleNumber;
+  document.getElementById('viewVehicleType').textContent = driverData.vehicleType.toUpperCase();
+  document.getElementById('viewVehicleModel').textContent = driverData.vehicleModel;
+}
+
+// ============================================
+// LOCATION FUNCTIONS
+// ============================================
+
+function getLocation() {
+  const statusDiv = document.getElementById('locationStatus');
+  
+  if (!navigator.geolocation) {
+    statusDiv.innerHTML = '<p style="color: var(--red);">Geolocation is not supported by your browser</p>';
+    return;
+  }
+
+  statusDiv.innerHTML = '<p style="color: var(--accent);">Getting your location...</p>';
+
+  navigator.geolocation.getCurrentPosition(
+    // Success
+    function(position) {
+      currentLocation.latitude = position.coords.latitude;
+      currentLocation.longitude = position.coords.longitude;
+
+      // Update display
+      document.getElementById('latitude').textContent = currentLocation.latitude.toFixed(6);
+      document.getElementById('longitude').textContent = currentLocation.longitude.toFixed(6);
+      
+      // Show location display
+      document.getElementById('locationDisplay').classList.remove('hidden');
+      
+      // Enable buttons
+      document.getElementById('copyBtn').disabled = false;
+      document.getElementById('shareBtn').disabled = false;
+      
+      statusDiv.innerHTML = '<p style="color: var(--success);">✓ Location retrieved successfully!</p>';
+
+      // Optional: Send location to backend
+      sendLocationToBackend(currentLocation.latitude, currentLocation.longitude);
+    },
+    // Error
+    function(error) {
+      let errorMsg = 'Unable to retrieve your location';
+      
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMsg = 'Location permission denied. Please enable location access.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMsg = 'Location information is unavailable.';
+          break;
+        case error.TIMEOUT:
+          errorMsg = 'Location request timed out.';
+          break;
+      }
+      
+      statusDiv.innerHTML = `<p style="color: var(--red);">${errorMsg}</p>`;
+    }
+  );
+}
+
+// function copyLocation() {
+//   if (!currentLocation.latitude || !currentLocation.longitude) {
+//     alert('Please get your location first!');
+//     return;
+//   }
+
+  // const locationText = `Latitude: ${currentLocation.latitude}, Longitude: ${currentLocation.longitude}`;
+  
+  // Copy to clipboard
+  // navigator.clipboard.writeText(locationText).then(function() {
+    // Show success message
+  //   const originalText = document.getElementById('copyBtn').innerHTML;
+  //   document.getElementById('copyBtn').innerHTML = '<span style="color: var(--success);">✓ Copied!</span>';
+    
+  //   setTimeout(() => {
+  //     document.getElementById('copyBtn').innerHTML = originalText;
+  //   }, 2000);
+  // }, function() {
+  //   alert('Failed to copy location');
+  // });
+// }
+
+function copyLocation() {
+  if (!currentLocation.latitude || !currentLocation.longitude) {
+    alert('Please get your location first!');
+    return;
+  }
+
+  const text = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Location copied!");
+    }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const input = document.createElement("input");
+  document.body.appendChild(input);
+  input.value = text;
+  input.select();
+  document.execCommand("copy");
+  document.body.removeChild(input);
+  alert("Location copied!");
+}
+
+
+function shareLocation() {
+  if (!currentLocation.latitude || !currentLocation.longitude) {
+    alert('Please get your location first!');
+    return;
+  }
+
+  // Create Google Maps link
+  const mapsUrl = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+  
+  // Check if Web Share API is available
+  if (navigator.share) {
+    navigator.share({
+      title: 'My Current Location',
+      text: `I'm at: Lat ${currentLocation.latitude}, Long ${currentLocation.longitude}`,
+      url: mapsUrl
+    }).then(() => {
+      console.log('Location shared successfully');
+    }).catch((error) => {
+      console.log('Error sharing:', error);
+      // Fallback: copy link
+      fallbackShare(mapsUrl);
+    });
+  } else {
+    // Fallback for browsers that don't support Web Share API
+    fallbackShare(mapsUrl);
+  }
+}
+
+function fallbackShare(mapsUrl) {
+  // Copy the maps link to clipboard
+  navigator.clipboard.writeText(mapsUrl).then(function() {
+    alert('Location link copied! You can paste and share it anywhere.');
+  }, function() {
+    // Last resort: open in new tab
+    window.open(mapsUrl, '_blank');
+  });
+}
+
+async function sendLocationToBackend(lat, lng) {
+  await fetch("/driver/update-location", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      latitude: lat,
+      longitude: lng
+    })
+  });
+}
+
+
+// ============================================
+// PROFILE FUNCTIONS (DB CONNECTED)
+// ============================================
+
+// Enable edit mode and prefill inputs from view mode
+function enableEdit() {
+  document.getElementById('viewMode').classList.add('hidden');
+  document.getElementById('editMode').classList.remove('hidden');
+  document.getElementById('editBtn').style.display = 'none';
+
+  document.getElementById('editFirstName').value =
+    document.getElementById('viewFirstName').textContent;
+
+  document.getElementById('editLastName').value =
+    document.getElementById('viewLastName').textContent;
+
+  document.getElementById('editPhone').value =
+    document.getElementById('viewPhone').textContent;
+
+  document.getElementById('editLicense').value =
+    document.getElementById('viewLicense').textContent;
+
+  document.getElementById('editVehicleNumber').value =
+    document.getElementById('viewVehicleNumber').textContent;
+
+  document.getElementById('editVehicleType').value =
+    document.getElementById('viewVehicleType').textContent.toLowerCase();
+
+  document.getElementById('editVehicleModel').value =
+    document.getElementById('viewVehicleModel').textContent;
+}
+
+// Cancel edit mode
+function cancelEdit() {
+  document.getElementById('viewMode').classList.remove('hidden');
+  document.getElementById('editMode').classList.add('hidden');
+  document.getElementById('editBtn').style.display = 'block';
+}
+
+// Save profile changes to DB
+async function saveProfile() {
+  const updatedData = {
+    firstName: document.getElementById('editFirstName').value,
+    lastName: document.getElementById('editLastName').value,
+    phone: document.getElementById('editPhone').value,
+    license: document.getElementById('editLicense').value,
+    vehicleNumber: document.getElementById('editVehicleNumber').value,
+    vehicleType: document.getElementById('editVehicleType').value,
+    vehicleModel: document.getElementById('editVehicleModel').value
+  };
+
+  try {
+    const response = await fetch('/api/complete-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData)
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update profile");
+    }
+
+    await loadProfileFromDB();   // 🔥 refresh data from DB
+    cancelEdit();
+    alert('Profile updated successfully!');
+  } catch (err) {
+    alert('Something went wrong while saving profile');
+    console.error(err);
+  }
+}
+
+async function logout() {
+  if (!confirm("Are you sure you want to logout?")) return;
+
+  await fetch('/driver/logout', { method: 'POST' });
+
+  window.location.href = '/signin';
+}
+
+
+window.addEventListener("load", () => {
+  startLiveTracking();
+});
+
+</script>
+
+<script>
+async function loadProfileFromDB() {
+  const res = await fetch("/driver/me");
+  const data = await res.json();
+
+  document.getElementById("navUserName").textContent =
+    data.first_name + " " + data.last_name;
+
+  document.getElementById("welcomeMessage").textContent =
+    `Welcome back, ${data.first_name}!`;
+
+  document.getElementById("viewFirstName").textContent = data.first_name || "-";
+  document.getElementById("viewLastName").textContent = data.last_name || "-";
+  document.getElementById("viewPhone").textContent = data.phone_number || "-";
+  document.getElementById("viewLicense").textContent = data.license_number || "-";
+  document.getElementById("viewVehicleNumber").textContent = data.vehicle_number || "-";
+  document.getElementById("viewVehicleType").textContent =
+    (data.vehicle_type || "-").toUpperCase();
+  document.getElementById("viewVehicleModel").textContent = data.vehicle_model || "-";
+}
+
+window.addEventListener("load", loadProfileFromDB);
+</script>
+
+
+</body>
+</html>

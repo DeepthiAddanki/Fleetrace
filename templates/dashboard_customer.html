@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FleetTrack – Customer Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg-deep:      #0a0e1a;
+    --bg-card:      #111829;
+    --bg-input:     #0d1220;
+    --accent:       #00e5ff;
+    --accent-dim:   rgba(0,229,255,.15);
+    --accent-glow:  rgba(0,229,255,.35);
+    --text-primary: #e8edf5;
+    --text-muted:   #6b7a99;
+    --border:       rgba(0,229,255,.18);
+    --red:          #ff4d6a;
+    --success:      #00e676;
+    --orange:       #ff9500;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%; overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+  }
+
+  /* ── animated grid bg ── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { to { background-position: 60px 60px; } }
+
+  /* ── blobs ── */
+  .blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(90px); opacity: .15; z-index: 0;
+    animation: blobFloat 10s ease-in-out infinite alternate;
+  }
+  .blob--1 { width:350px; height:350px; background:#00e5ff; top:-120px; left:-120px; }
+  .blob--2 { width:280px; height:280px; background:#0066ff; bottom:-100px; right:15%; animation-delay:3s; }
+  @keyframes blobFloat { to { transform: translate(40px, 30px) scale(1.08); } }
+
+  /* ══════════════ LAYOUT ══════════════ */
+  .dashboard {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    grid-template-rows: 80px 1fr;
+    height: 100%;
+    gap: 0;
+  }
+
+  /* ══════════════ TOP NAV ══════════════ */
+  .topnav {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 32px;
+    justify-content: space-between;
+    backdrop-filter: blur(12px);
+  }
+
+  .topnav .logo-area { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+  .logo-icon svg { width: 24px; height: 24px; }
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem; font-weight: 700; letter-spacing: 1.5px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .topnav .nav-actions { display: flex; align-items: center; gap: 20px; }
+  .btn-icon {
+    width: 38px; height: 38px;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .3s;
+    position: relative;
+  }
+  .btn-icon svg { width: 18px; height: 18px; color: var(--text-muted); transition: color .3s; }
+  .btn-icon:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .btn-icon:hover svg { color: var(--accent); }
+  .btn-icon .badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--red);
+    font-size: .65rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--bg-card);
+  }
+
+  .user-pill {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px 6px 6px;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+    cursor: pointer; transition: all .3s;
+  }
+  .user-pill:hover { border-color: var(--accent); }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700; color: #0a0e1a;
+  }
+  .user-pill .name { font-size: .88rem; font-weight: 600; }
+
+  /* ══════════════ LEFT SIDEBAR ══════════════ */
+  .sidebar {
+    grid-row: 2;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+    overflow-y: auto;
+  }
+  .sidebar::-webkit-scrollbar { width: 5px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+  .sidebar h3 {
+    font-size: .75rem; font-weight: 700;
+    color: var(--text-muted); letter-spacing: 1.2px;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  .nav-menu { list-style: none; margin-bottom: 32px; }
+  .nav-menu li {
+    margin-bottom: 6px;
+  }
+  .nav-menu a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    text-decoration: none; color: var(--text-muted);
+    font-size: .92rem; font-weight: 500;
+    transition: all .3s;
+  }
+  .nav-menu a svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-menu a:hover { background: var(--accent-dim); color: var(--accent); }
+  .nav-menu a.active { background: var(--accent-dim); color: var(--accent); box-shadow: 0 0 12px var(--accent-dim); }
+
+  /* quick stats */
+  .quick-stats { display: flex; flex-direction: column; gap: 12px; }
+  .stat-card {
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .stat-card .stat-label { font-size: .72rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .8px; }
+  .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; font-family: 'Orbitron', sans-serif; color: var(--accent); }
+
+  /* ══════════════ MAIN CONTENT ══════════════ */
+  .main-content {
+    grid-row: 2;
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+  .main-content::-webkit-scrollbar { width: 6px; }
+  .main-content::-webkit-scrollbar-track { background: transparent; }
+  .main-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem; font-weight: 700; letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .page-header p { color: var(--text-muted); font-size: .95rem; }
+
+  /* section spacing */
+  .section { margin-bottom: 32px; }
+  .section-title {
+    font-size: 1.1rem; font-weight: 700; letter-spacing: .5px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title svg { width: 20px; height: 20px; color: var(--accent); }
+
+  /* ── Book Vehicle Form ── */
+  .book-form {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+  }
+  .book-form .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  .form-field label {
+    display: block; font-size: .76rem; font-weight: 600;
+    color: var(--text-muted); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: .7px;
+  }
+  .form-field select,
+  .form-field input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 9px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: .94rem; font-weight: 500;
+    outline: none;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .form-field select { cursor: pointer; }
+  .form-field input:focus,
+  .form-field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .btn-primary {
+    padding: 12px 28px;
+    border: none; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #0077ff);
+    color: #0a0e1a;
+    font-family: 'Orbitron', sans-serif;
+    font-size: .82rem; font-weight: 700; letter-spacing: 1.2px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px var(--accent-glow);
+    transition: transform .2s, box-shadow .3s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-glow); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ── Active Trips ── */
+  .trips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+  }
+  .trip-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    transition: box-shadow .3s, transform .3s;
+  }
+  .trip-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.3); transform: translateY(-2px); }
+  .trip-card .status-badge {
+    position: absolute; top: 14px; right: 14px;
+    padding: 4px 10px; border-radius: 12px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .6px;
+    text-transform: uppercase;
+  }
+  .status-badge.active { background: rgba(0,230,118,.18); color: var(--success); border: 1px solid rgba(0,230,118,.3); }
+  .status-badge.pending { background: rgba(255,149,0,.18); color: var(--orange); border: 1px solid rgba(255,149,0,.3); }
+  .status-badge.completed { background: rgba(107,122,153,.18); color: var(--text-muted); border: 1px solid rgba(107,122,153,.3); }
+
+  .trip-card .vehicle-info {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 14px;
+  }
+  .vehicle-icon {
+    width: 52px; height: 52px;
+    background: var(--accent-dim);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vehicle-icon svg { width: 26px; height: 26px; color: var(--accent); }
+  .vehicle-info .details h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
+  .vehicle-info .details p { font-size: .8rem; color: var(--text-muted); }
+
+  .trip-card .trip-meta {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+  .trip-meta-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .84rem; color: var(--text-muted);
+  }
+  .trip-meta-row svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  .trip-actions {
+    display: flex; gap: 10px; margin-top: 14px;
+  }
+  .btn-small {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: .8rem; font-weight: 600;
+    cursor: pointer;
+    transition: all .3s;
+  }
+  .btn-small:hover { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
+  /* ── Booking History ── */
+  .history-table {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .history-table table {
+    width: 100%; border-collapse: collapse;
+  }
+  .history-table thead {
+    background: rgba(0,229,255,.08);
+  }
+  .history-table th {
+    text-align: left;
+    padding: 14px 18px;
+    font-size: .76rem; font-weight: 700;
+    color: var(--text-muted); letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-table td {
+    padding: 14px 18px;
+    font-size: .88rem;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .history-table tbody tr {
+    transition: background .2s;
+  }
+  .history-table tbody tr:hover {
+    background: rgba(255,255,255,.02);
+  }
+
+  /* ══════════════ RIGHT SIDEBAR (Profile) ══════════════ */
+  .profile-sidebar {
+    grid-row: 2;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    padding: 28px 22px;
+    overflow-y: auto;
+  }
+  .profile-sidebar::-webkit-scrollbar { width: 5px; }
+  .profile-sidebar::-webkit-scrollbar-track { background: transparent; }
+  .profile-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+  .profile-header {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .profile-avatar {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; font-weight: 700; color: #0a0e1a;
+    margin: 0 auto 12px;
+    box-shadow: 0 0 22px var(--accent-glow);
+  }
+  .profile-header h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+  .profile-header p { font-size: .82rem; color: var(--text-muted); }
+
+  .profile-details {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .detail-item {
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .detail-item .label { font-size: .72rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .8px; }
+  .detail-item .value { font-size: .9rem; font-weight: 600; }
+
+  .btn-logout {
+    width: 100%;
+    margin-top: 24px;
+    padding: 11px;
+    border: 1px solid var(--red);
+    border-radius: 9px;
+    background: rgba(255,77,106,.08);
+    color: var(--red);
+    font-size: .82rem; font-weight: 700; letter-spacing: 1px;
+    cursor: pointer;
+    transition: all .3s;
+  }
+  .btn-logout:hover { background: rgba(255,77,106,.15); }
+
+  /* ══════════════ RESPONSIVE ══════════════ */
+  @media (max-width: 1200px) {
+    .dashboard { grid-template-columns: 240px 1fr; }
+    .profile-sidebar { display: none; }
+  }
+  @media (max-width: 900px) {
+    .dashboard { grid-template-columns: 1fr; grid-template-rows: 70px 1fr; }
+    .sidebar { display: none; }
+    .topnav { padding: 0 20px; }
+    .main-content { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="blob blob--1"></div>
+<div class="blob blob--2"></div>
+
+<div class="dashboard">
+
+  <!-- ══════════════ TOP NAV ══════════════ -->
+  <nav class="topnav">
+    <div class="logo-area">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="white" stroke="none"/>
+        </svg>
+      </div>
+      <div class="logo-text">FLEET<span>TRACK</span></div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-icon" title="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="badge">2</span>
+      </button>
+      <button class="btn-icon" title="Help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="user-pill">
+        <div class="user-avatar">RS</div>
+        <span class="name">Rahul Sharma</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══════════════ LEFT SIDEBAR ══════════════ -->
+  <aside class="sidebar">
+    <h3>Navigation</h3>
+    <ul class="nav-menu">
+      <li><a href="#" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        My Bookings
+      </a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Track Vehicle
+      </a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        History
+      </a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a></li>
+    </ul>
+
+    <h3>Quick Stats</h3>
+    <div class="quick-stats">
+      <div class="stat-card">
+        <div class="stat-label">Active Trips</div>
+        <div class="stat-value">2</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-value">18</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════ MAIN CONTENT ══════════════ -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>Welcome Back, Rahul</h1>
+      <p>Book a vehicle, track your trips, or review your booking history.</p>
+    </div>
+
+    <!-- ── Book Vehicle ── -->
+    <section class="section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Book a Vehicle
+      </h2>
+      <div class="book-form">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Vehicle Type</label>
+            <select>
+              <option>Select type</option>
+              <option>Sedan</option>
+              <option>SUV</option>
+              <option>Van</option>
+              <option>Truck</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Pickup Location</label>
+            <input type="text" placeholder="Enter pickup address"/>
+          </div>
+          <div class="form-field">
+            <label>Drop Location</label>
+            <input type="text" placeholder="Enter drop address"/>
+          </div>
+          <div class="form-field">
+            <label>Pickup Date & Time</label>
+            <input type="datetime-local"/>
+          </div>
+        </div>
+        <button class="btn-primary">BOOK NOW</button>
+      </div>
+    </section>
+
+    <!-- ── Active Trips ── -->
+    <section class="section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Active Trips
+      </h2>
+      <div class="trips-grid">
+        <!-- Trip 1 -->
+        <div class="trip-card">
+          <div class="status-badge active">Active</div>
+          <div class="vehicle-info">
+            <div class="vehicle-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div class="details">
+              <h4>Toyota Innova</h4>
+              <p>MH12AB5678</p>
+            </div>
+          </div>
+          <div class="trip-meta">
+            <div class="trip-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z"/></svg>
+              <span>Andheri West → Bandra East</span>
+            </div>
+            <div class="trip-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              <span>Started 25 mins ago</span>
+            </div>
+            <div class="trip-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Driver: Amit Kumar</span>
+            </div>
+          </div>
+          <div class="trip-actions">
+            <button class="btn-small">Track Live</button>
+            <button class="btn-small">Contact Driver</button>
+          </div>
+        </div>
+
+        <!-- Trip 2 -->
+        <div class="trip-card">
+          <div class="status-badge pending">Pending</div>
+          <div class="vehicle-info">
+            <div class="vehicle-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div class="details">
+              <h4>Mahindra Scorpio</h4>
+              <p>MH12CD9012</p>
+            </div>
+          </div>
+          <div class="trip-meta">
+            <div class="trip-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z"/></svg>
+              <span>Powai → Thane</span>
+            </div>
+            <div class="trip-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              <span>Scheduled for 3:00 PM</span>
+            </div>
+            <div class="trip-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Driver: Pending Assignment</span>
+            </div>
+          </div>
+          <div class="trip-actions">
+            <button class="btn-small">Modify</button>
+            <button class="btn-small">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Booking History ── -->
+    <section class="section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        Recent Booking History
+      </h2>
+      <div class="history-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>Route</th>
+              <th>Driver</th>
+              <th>Status</th>
+              <th>Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Feb 3, 2026</td>
+              <td>Honda City</td>
+              <td>Andheri → Bandra</td>
+              <td>Ravi Patil</td>
+              <td><span class="status-badge completed">Completed</span></td>
+              <td>₹850</td>
+            </tr>
+            <tr>
+              <td>Feb 1, 2026</td>
+              <td>Maruti Swift</td>
+              <td>Goregaon → Malad</td>
+              <td>Suresh Yadav</td>
+              <td><span class="status-badge completed">Completed</span></td>
+              <td>₹620</td>
+            </tr>
+            <tr>
+              <td>Jan 28, 2026</td>
+              <td>Toyota Innova</td>
+              <td>Powai → Airport</td>
+              <td>Amit Kumar</td>
+              <td><span class="status-badge completed">Completed</span></td>
+              <td>₹1,200</td>
+            </tr>
+            <tr>
+              <td>Jan 25, 2026</td>
+              <td>Hyundai Creta</td>
+              <td>Thane → Dadar</td>
+              <td>Vijay Singh</td>
+              <td><span class="status-badge completed">Completed</span></td>
+              <td>₹980</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════ RIGHT SIDEBAR (Profile) ══════════════ -->
+  <aside class="profile-sidebar">
+    <div class="profile-header">
+      <div class="profile-avatar">RS</div>
+      <h3>Rahul Sharma</h3>
+      <p>Customer</p>
+    </div>
+
+    <div class="profile-details">
+      <div class="detail-item">
+        <div class="label">Email</div>
+        <div class="value">rahul@example.com</div>
+      </div>
+      <div class="detail-item">
+        <div class="label">Phone</div>
+        <div class="value">+91 9876543210</div>
+      </div>
+      <div class="detail-item">
+        <div class="label">Member Since</div>
+        <div class="value">Jan 15, 2026</div>
+      </div>
+      <div class="detail-item">
+        <div class="label">Total Bookings</div>
+        <div class="value">18 Trips</div>
+      </div>
+    </div>
+
+    <button class="btn-logout">LOG OUT</button>
+  </aside>
+
+</div>
+
+<script>
+// Sample interaction handlers
+document.querySelectorAll('.btn-small').forEach(btn => {
+  btn.addEventListener('click', function() {
+    alert('Feature: ' + this.textContent);
+  });
+});
+
+document.querySelector('.btn-primary').addEventListener('click', function(e) {
+  e.preventDefault();
+  alert('Booking request submitted! Driver will be assigned shortly.');
+});
+</script>
+
+</body>
+</html>
